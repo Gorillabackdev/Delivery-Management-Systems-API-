@@ -21,10 +21,7 @@ A Node.js/Express API scaffold for a delivery management system with MongoDB, lo
 **Environment variables**
 Create a `.env` file (already present in this repo) with:
 ```
-PORT=5000
-MONGO_URI=mongodb://127.0.0.1:27017/deliveryDB
-JWT_SECRET=supersecretkey
-JWT_EXPIRES_IN=7d
+
 ```
 
 **Install & run**
