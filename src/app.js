@@ -13,7 +13,7 @@ app.use(morgan("dev"));
 app.get("/", (req, res) => {
   res.status(200).json({
     status: "success",
-    message: "Delivery Management API running"
+    message: "Delivery Management API jsonfied"
   });
 });
 
