@@ -201,7 +201,7 @@ const autoAssignDriver = asyncHandler(async (req, res) => {
     throw new Error("Order not found");
   }
 
-  // Auto-assign: find, say, up to 3 available riders
+  // Auto-assign: find up to 3 available riders
   const drivers = await User.find({ role: "Rider" }).limit(3);
 
   if (!drivers || drivers.length === 0) {
@@ -249,7 +249,6 @@ const acceptOrder = asyncHandler(async (req, res) => {
 
   // RACE CONDITION HANDLING:
   // Using findOneAndUpdate with status filter to ensure atomic update.
-  // We need to re-query to do this atomically on the DB server side.
   const updatedOrder = await Order.findOneAndUpdate(
     { _id: req.params.id, status: "Assigned" },
     {
@@ -301,9 +300,6 @@ const declineOrder = asyncHandler(async (req, res) => {
       (driverId) => driverId.toString() !== req.user.id
     );
 
-    // If no drivers left, maybe set back to Pending? 
-    // Or keep as Assigned (but to no one? that might break logic). 
-    // Let's say if no assigned drivers, set to Pending.
     if (order.assignedDrivers.length === 0) {
       order.status = "Pending";
     }
