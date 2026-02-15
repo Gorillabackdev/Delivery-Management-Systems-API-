@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs"); // Ensure bcryptjs is installed
+const bcrypt = require("bcryptjs");
 
 const ROLES = ["Admin", "User", "Rider"];
 
@@ -36,17 +36,17 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Encrypt password using bcrypt
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
-    next();
-  }
+//  Hash password before saving (using async/await)
+userSchema.pre("save", async function () {
+  // Only run if password was modified
+  if (!this.isModified("password")) return;
 
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-// Match user entered password to hashed password in database
+
+// Compare entered password with stored hash
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };

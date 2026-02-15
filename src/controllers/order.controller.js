@@ -343,6 +343,106 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   res.status(200).json(order);
 });
 
+// @desc    Update driver location for an order
+// @route   PUT /api/orders/:id/location
+// @access  Private (Rider only)
+const updateLocation = asyncHandler(async (req, res) => {
+  const { lat, lng } = req.body; // Expecting { lat, lng }
+  const orderId = req.params.id;
+
+  // Validate input
+  if (!lat || !lng) {
+    res.status(400);
+    throw new Error('Latitude and longitude are required');
+  }
+
+  const order = await Order.findById(orderId);
+  if (!order) {
+    res.status(404);
+    throw new Error('Order not found');
+  }
+
+  // Only the assigned driver can update location
+  if (!order.driver || order.driver.toString() !== req.user.id) {
+    res.status(403);
+    throw new Error('You are not the assigned driver for this order');
+  }
+
+  // Restrict status to orders in progress
+  if (!['Accepted', 'PickedUp'].includes(order.status)) {
+    res.status(400);
+    throw new Error('Location can only be updated while order is in progress');
+  }
+
+  // Import the DriverLocation model (or require at top of file)
+  const DriverLocation = require('../models/driverLocation.model');
+
+  // Upsert the driver's location
+  await DriverLocation.findOneAndUpdate(
+    { driver: req.user.id },
+    {
+      driver: req.user.id,
+      currentOrder: order._id,
+      location: { type: 'Point', coordinates: [lng, lat] },
+      updatedAt: Date.now(),
+    },
+    { upsert: true, new: true }
+  );
+
+  res.status(200).json({ message: 'Location updated successfully' });
+});
+
+// @desc    Get order tracking info (including driver location)
+// @route   GET /api/orders/:id/track
+// @access  Private (Customer of the order, Admin, or assigned Rider)
+const trackOrder = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id)
+    .populate('customer', 'name email')
+    .populate('driver', 'name');
+
+  if (!order) {
+    res.status(404);
+    throw new Error('Order not found');
+  }
+
+  // Authorization check
+  const isCustomer = order.customer._id.toString() === req.user.id;
+  const isDriver = order.driver && order.driver._id.toString() === req.user.id;
+  if (!isCustomer && !isDriver && req.user.role !== 'Admin') {
+    res.status(403);
+    throw new Error('Not authorized to track this order');
+  }
+
+  // Fetch latest driver location if a driver is assigned
+  let driverLocation = null;
+  if (order.driver) {
+    const DriverLocation = require('../models/driverLocation.model');
+    const loc = await DriverLocation.findOne({ driver: order.driver._id });
+    if (loc && loc.location && loc.location.coordinates) {
+      driverLocation = {
+        coordinates: {
+          lng: loc.location.coordinates[0],
+          lat: loc.location.coordinates[1],
+        },
+        updatedAt: loc.updatedAt,
+      };
+    }
+  }
+
+  // Prepare response (customize as needed)
+  res.status(200).json({
+    order: {
+      id: order._id,
+      status: order.status,
+      pickupLocation: order.pickupLocation,
+      dropoffLocation: order.dropoffLocation,
+      estimatedDelivery: order.pickupTime, // or calculate based on distance
+      driver: order.driver ? order.driver.name : null,
+    },
+    driverLocation, // null if not available
+  });
+});
+
 module.exports = {
   createOrder,
   getAllOrders,
@@ -354,4 +454,6 @@ module.exports = {
   acceptOrder,
   declineOrder,
   updateOrderStatus,
+  updateLocation,
+  trackOrder,
 };
