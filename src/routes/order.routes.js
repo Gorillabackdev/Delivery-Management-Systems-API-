@@ -11,6 +11,8 @@ const {
   acceptOrder,
   declineOrder,
   updateOrderStatus,
+  updateLocation,
+  trackOrder,
 } = require("../controllers/order.controller");
 const { protect, authorize } = require("../middlewares/auth.middleware");
 
@@ -42,5 +44,11 @@ router
 router
   .route("/:id/status")
   .put(protect, authorize("Rider", "Admin"), updateOrderStatus);
+
+router
+  .route("/:id/location")
+  .put(protect, authorize("Rider"), updateLocation);
+
+router.route("/:id/track").get(protect, trackOrder);
 
 module.exports = router;
