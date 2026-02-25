@@ -2,7 +2,7 @@
 
 A Node.js/Express API scaffold for a delivery management system with MongoDB, logging, and authentication.
 
-**What�s implemented so far**
+What's Implemented So Far
 - Express app with JSON parsing, CORS, and request logging
 - MongoDB connection helper
 - Auth module with register/login, password hashing, JWT auth, and role-based access (Admin/User/Rider)
