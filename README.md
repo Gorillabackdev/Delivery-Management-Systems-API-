@@ -19,10 +19,10 @@ A Node.js/Express API scaffold for a delivery management system with MongoDB, lo
 - `src/models/auth/` auth module (model, controller, service, routes)
 
 **Environment variables**
-Create a `.env` file (already present in this repo) with:
-```
-
-```
+Create a `.env` file using `.env.example` as a template.
+Environment-specific templates:
+- `.env.development.example`
+- `.env.production.example`
 
 **Install & run**
 ```
@@ -36,6 +36,61 @@ Base: `http://localhost:5000`
 Auth routes:
 - `POST /api/auth/register`
 - `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `POST /api/auth/logout`
+
+User routes:
+- `GET /api/users` (Admin)
+- `GET /api/users/:id` (Admin or self)
+- `PUT /api/users/:id` (Admin or self)
+- `PATCH /api/users/:id/deactivate` (Admin)
+- `PATCH /api/users/:id/role` (Admin)
+- `GET /api/users/profile`
+- `PATCH /api/users/change-password`
+
+Order routes:
+- `POST /api/orders`
+- `GET /api/orders` (with pagination)
+- `GET /api/orders/:id`
+- `PUT /api/orders/:id`
+- `PUT /api/orders/:id/cancel`
+- `PUT /api/orders/:id/assign` (Admin)
+- `PUT /api/orders/:id/auto-assign` (Admin)
+- `PUT /api/orders/:id/accept` (Rider)
+- `PUT /api/orders/:id/decline` (Rider)
+- `PUT /api/orders/:id/status` (Rider/Admin)
+- `PUT /api/orders/:id/location` (Rider)
+- `GET /api/orders/:id/track`
+
+Wallet routes:
+- `GET /api/wallet`
+- `GET /api/wallet/transactions`
+- `POST /api/wallet/deposit`
+- `POST /api/wallet/withdraw`
+- `POST /api/wallet/transfer`
+
+Payments:
+- `POST /api/payments/pay`
+- `POST /api/payments/stripe/intent`
+- `POST /api/payments/stripe/webhook`
+
+Rider:
+- `PATCH /api/rider/status`
+- `GET /api/rider/earnings`
+- `GET /api/rider/orders`
+
+Admin:
+- `GET /api/admin/stats`
+- `GET /api/admin/orders`
+- `GET /api/admin/transactions`
+
+**Documentation**
+- Architecture: `docs/architecture.md`
+- ER diagram: `docs/erd.md`
+- Contribution guide: `CONTRIBUTING.md`
+- Postman collection: `docs/api.postman.collection.json`
+- Deployment notes: `docs/deployment.md`
+- Roles & responsibilities: `docs/roles.md`
 
 **Auth request examples**
 Register:
