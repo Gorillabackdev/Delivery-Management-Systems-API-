@@ -1,45 +1,51 @@
 # Delivery Management System API
 
-A Node.js/Express API scaffold for a delivery management system with MongoDB, logging, and authentication.
+Production‑ready delivery backend with auth, orders, riders, wallet, payments, admin stats, and Stripe support.
 
-**What�s implemented so far**
-- Express app with JSON parsing, CORS, and request logging
-- MongoDB connection helper
-- Auth module with register/login, password hashing, JWT auth, and role-based access (Admin/User/Rider)
+**Highlights**
+- JWT auth with refresh tokens
+- Orders lifecycle with rider assignment and tracking
+- Wallet system with deposits, withdrawals, transfers, and transactions
+- Admin stats and audit logging
+- Stripe payment intents + webhook support
+- Security middleware (rate limit, helmet, sanitization)
 
-**Tech stack**
-- Node.js, Express
+**Tech Stack**
+- Node.js + Express
 - MongoDB + Mongoose
 - JWT + bcryptjs
 
-**Project structure**
-- `server.js` boots the app and connects to MongoDB
-- `src/app.js` configures middleware and routes
-- `src/config/db.js` MongoDB connection
-- `src/models/auth/` auth module (model, controller, service, routes)
-
-**Environment variables**
-Create a `.env` file using `.env.example` as a template.
-Environment-specific templates:
-- `.env.development.example`
-- `.env.production.example`
-
-**Install & run**
-```
+**Quick Start**
+```bash
 npm install
 npm run dev
 ```
 
+**Environment**
+Use `.env.example` as a base. Templates:
+- `.env.development.example`
+- `.env.production.example`
+
+**Project Structure**
+- `server.js` app entry
+- `src/app.js` middleware + routes
+- `src/config/db.js` MongoDB connection
+- `src/models/` Mongoose models
+- `src/controllers/` route handlers
+- `src/routes/` API routes
+- `src/middlewares/` auth, errors, validation
+- `src/utils/` tokens, logger
+
 **Routes**
 Base: `http://localhost:5000`
 
-Auth routes:
+Auth
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
 
-User routes:
+Users
 - `GET /api/users` (Admin)
 - `GET /api/users/:id` (Admin or self)
 - `PUT /api/users/:id` (Admin or self)
@@ -48,9 +54,9 @@ User routes:
 - `GET /api/users/profile`
 - `PATCH /api/users/change-password`
 
-Order routes:
+Orders
 - `POST /api/orders`
-- `GET /api/orders` (with pagination)
+- `GET /api/orders` (pagination, filter, sort)
 - `GET /api/orders/:id`
 - `PUT /api/orders/:id`
 - `PUT /api/orders/:id/cancel`
@@ -62,37 +68,37 @@ Order routes:
 - `PUT /api/orders/:id/location` (Rider)
 - `GET /api/orders/:id/track`
 
-Wallet routes:
+Wallet
 - `GET /api/wallet`
 - `GET /api/wallet/transactions`
 - `POST /api/wallet/deposit`
 - `POST /api/wallet/withdraw`
 - `POST /api/wallet/transfer`
 
-Payments:
-- `POST /api/payments/pay`
+Payments
+- `POST /api/payments/pay` (wallet)
 - `POST /api/payments/stripe/intent`
 - `POST /api/payments/stripe/webhook`
 
-Rider:
+Rider
 - `PATCH /api/rider/status`
 - `GET /api/rider/earnings`
 - `GET /api/rider/orders`
 
-Admin:
+Admin
 - `GET /api/admin/stats`
 - `GET /api/admin/orders`
 - `GET /api/admin/transactions`
 
-**Documentation**
+**Docs**
 - Architecture: `docs/architecture.md`
-- ER diagram: `docs/erd.md`
-- Contribution guide: `CONTRIBUTING.md`
-- Postman collection: `docs/api.postman.collection.json`
-- Deployment notes: `docs/deployment.md`
-- Roles & responsibilities: `docs/roles.md`
+- ERD: `docs/erd.md`
+- Roles: `docs/roles.md`
+- Deployment: `docs/deployment.md`
+- Postman: `docs/api.postman.collection.json`
+- Contributing: `CONTRIBUTING.md`
 
-**Auth request examples**
+**Auth Example**
 Register:
 ```json
 {
@@ -111,23 +117,6 @@ Login:
 }
 ```
 
-**Auth response**
-Both register/login return:
-- `token` (JWT)
-- `user` object with `id`, `name`, `email`, `role`
-
-**Role-based access**
-Available roles: `Admin`, `User`, `Rider`
-
-To protect a route:
-```js
-const { requireAuth, requireRole } = require("./models/auth/auth.controller");
-
-router.get("/admin-only", requireAuth, requireRole("Admin"), (req, res) => {
-  res.json({ ok: true });
-});
-```
-
 **Notes**
-- Passwords are hashed with bcrypt before storage
-- JWT is signed using `JWT_SECRET`
+- JWT uses `JWT_SECRET`.
+- Stripe requires `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`.
