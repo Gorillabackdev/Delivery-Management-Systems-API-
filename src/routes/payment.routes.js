@@ -1,6 +1,7 @@
 const express = require("express");
 const { body, validationResult } = require("express-validator");
 const { payForOrder } = require("../controllers/payment.controller");
+const paymentController = require("../controllers/payment.controllers");
 const {
   createPaymentIntent,
   handleWebhook,
@@ -17,6 +18,7 @@ const handleValidationErrors = (req, res, next) => {
   next();
 };
 
+// Wallet payment flow
 router.post(
   "/pay",
   protect,
@@ -26,6 +28,7 @@ router.post(
   payForOrder
 );
 
+// Stripe payment flow
 router.post(
   "/stripe/intent",
   protect,
@@ -34,7 +37,11 @@ router.post(
   handleValidationErrors,
   createPaymentIntent
 );
-
 router.post("/stripe/webhook", handleWebhook);
+
+// Legacy payment endpoints
+router.post("/", paymentController.createPayment);
+router.patch("/:paymentId/success", paymentController.paymentSuccess);
+router.patch("/:paymentId/fail", paymentController.paymentFailed);
 
 module.exports = router;
