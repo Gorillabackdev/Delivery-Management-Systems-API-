@@ -1,6 +1,6 @@
 const Payment = require("../models/payment");
-const Order = require("../models/Order");
-const Delivery = require("../models/Delivery");
+const Order = require("../models/order.model");
+const Delivery = require("../models/delivery.model");
 
 /**
  * Create Payment
@@ -11,7 +11,7 @@ exports.createPaymentService = async (orderId, method) => {
 
   const payment = await Payment.create({
     order: orderId,
-    amount: order.totalAmount,
+    amount: order.price,
     method,
     status: "pending",
   });
@@ -31,16 +31,21 @@ exports.handlePaymentSuccess = async (paymentId) => {
   payment.transactionRef = "TXN-" + Date.now();
   await payment.save();
 
-  // 🔥 Update order status (THIS IS THE BONUS PART)
+  // Update order payment status
   const order = await Order.findById(payment.order);
-  order.status = "paid";
-  await order.save();
+  if (order) {
+    order.paymentStatus = "Paid";
+    await order.save();
+  }
 
-  // 🔥 Trigger Delivery
-  await Delivery.create({
-    order: order._id,
-    status: "pending",
-  });
+  // Trigger delivery record if needed
+  if (order) {
+    await Delivery.findOneAndUpdate(
+      { order: order._id },
+      { order: order._id, rider: order.driver, status: "Pending" },
+      { upsert: true }
+    );
+  }
 
   return payment;
 };
