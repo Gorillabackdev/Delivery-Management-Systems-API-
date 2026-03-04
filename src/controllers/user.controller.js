@@ -1,53 +1,12 @@
-const asyncHandler = require("../middlewares/asyncHandler");
-const User = require("../models/user.model");
-const logger = require("../utils/logger");
-
-const parsePagination = (query) => {
-  const page = Math.max(parseInt(query.page, 10) || 1, 1);
-  const limitRaw = parseInt(query.limit, 10) || 20;
-  const limit = Math.min(Math.max(limitRaw, 1), 100);
-  const skip = (page - 1) * limit;
-
-  return { page, limit, skip };
-};
+    const asyncHandler = require("../middlewares/asyncHandler");
+    const User = require("../models/user.model");
 
     // @desc    Get all users
     // @route   GET /api/users
     // @access  Private (Admin only)
     const getAllUsers = asyncHandler(async (req, res) => {
-    const { page, limit, skip } = parsePagination(req.query);
-    const filter = {};
-
-    if (req.query.role) {
-      filter.role = req.query.role;
-    }
-
-    if (req.query.q) {
-      const q = req.query.q.trim();
-      filter.$or = [
-        { name: { $regex: q, $options: "i" } },
-        { email: { $regex: q, $options: "i" } },
-      ];
-    }
-
-    const [users, total] = await Promise.all([
-      User.find(filter)
-        .select("-password")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit),
-      User.countDocuments(filter),
-    ]);
-
-    const pages = Math.ceil(total / limit) || 1;
-
-    res.status(200).json({
-      page,
-      pages,
-      total,
-      count: users.length,
-      data: users,
-    });
+    const users = await User.find({}).select("-password");
+    res.status(200).json(users);
     });
 
     // @desc    Get single user by ID
@@ -137,11 +96,8 @@ const parsePagination = (query) => {
         throw new Error("Admin cannot delete their own account");
     }
 
-    user.isActive = false;
-    user.deletedAt = new Date();
-    await user.save();
-    logger.info("user_deactivated", { adminId: req.user.id, userId: user._id });
-    res.status(200).json({ message: "User deactivated" });
+    await user.deleteOne();
+    res.status(200).json({ message: "User removed" });
     });
 
     // @desc    Get current user profile
@@ -152,92 +108,10 @@ const parsePagination = (query) => {
     res.status(200).json(user);
     });
 
-    // @desc    Deactivate user
-    // @route   PATCH /api/users/:id/deactivate
-    // @access  Private (Admin only)
-    const deactivateUser = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.params.id);
-
-    if (!user) {
-        res.status(404);
-        throw new Error("User not found");
-    }
-
-    if (!user.isActive) {
-        res.status(400);
-        throw new Error("User already deactivated");
-    }
-
-    user.isActive = false;
-    user.deletedAt = new Date();
-    await user.save();
-
-    res.status(200).json({ message: "User deactivated" });
-    });
-
-    // @desc    Assign role
-    // @route   PATCH /api/users/:id/role
-    // @access  Private (Admin only)
-    const assignRole = asyncHandler(async (req, res) => {
-    const { role } = req.body;
-    const user = await User.findById(req.params.id);
-
-    if (!user) {
-        res.status(404);
-        throw new Error("User not found");
-    }
-
-    user.role = role;
-    await user.save();
-
-    logger.info("user_role_assigned", {
-        adminId: req.user.id,
-        userId: user._id,
-        role,
-    });
-    res.status(200).json({
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-    });
-    });
-
-    // @desc    Change password
-    // @route   PATCH /api/users/change-password
-    // @access  Private
-    const changePassword = asyncHandler(async (req, res) => {
-    const { currentPassword, newPassword } = req.body;
-
-    if (!currentPassword || !newPassword) {
-        res.status(400);
-        throw new Error("currentPassword and newPassword are required");
-    }
-
-    const user = await User.findById(req.user.id).select("+password");
-    if (!user) {
-        res.status(404);
-        throw new Error("User not found");
-    }
-
-    const isMatch = await user.matchPassword(currentPassword);
-    if (!isMatch) {
-        res.status(401);
-        throw new Error("Current password is incorrect");
-    }
-
-    user.password = newPassword;
-    await user.save();
-    res.status(200).json({ message: "Password updated" });
-    });
-
     module.exports = {
     getAllUsers,
     getUserById,
     updateUser,
     deleteUser,
     getProfile,
-    deactivateUser,
-    assignRole,
-    changePassword,
     };

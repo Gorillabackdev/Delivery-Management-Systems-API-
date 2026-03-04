@@ -1,26 +1,6 @@
 const asyncHandler = require("../middlewares/asyncHandler");
 const Order = require("../models/order.model");
 const User = require("../models/user.model");
-const Delivery = require("../models/delivery.model");
-
-const parsePagination = (query) => {
-  const page = Math.max(parseInt(query.page, 10) || 1, 1);
-  const limitRaw = parseInt(query.limit, 10) || 20;
-  const limit = Math.min(Math.max(limitRaw, 1), 100);
-  const skip = (page - 1) * limit;
-
-  return { page, limit, skip };
-};
-
-const parseSort = (query) => {
-  const allowed = new Set(["createdAt", "updatedAt", "price", "status"]);
-  const sort = typeof query.sort === "string" ? query.sort : "-createdAt";
-  const direction = sort.startsWith("-") ? -1 : 1;
-  const field = sort.replace(/^-/, "");
-
-  if (!allowed.has(field)) return { createdAt: -1 };
-  return { [field]: direction };
-};
 
 // Helper function to calculate distance in km using Haversine formula
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -70,9 +50,6 @@ const createOrder = asyncHandler(async (req, res) => {
     pickupTime,
     items,
     price,
-    statusTimestamps: {
-      pendingAt: new Date(),
-    },
   });
 
   res.status(201).json(order);
@@ -82,44 +59,24 @@ const createOrder = asyncHandler(async (req, res) => {
 // @route   GET /api/orders
 // @access  Private
 const getAllOrders = asyncHandler(async (req, res) => {
-  const { page, limit, skip } = parsePagination(req.query);
-  const sort = parseSort(req.query);
-
-  const filter = {};
+  let orders;
 
   if (req.user.role === "Admin") {
-    // no extra filter
+    orders = await Order.find().populate("customer", "name email");
   } else if (req.user.role === "Rider") {
-    filter.$or = [
-      { driver: req.user.id },
-      { assignedDrivers: { $in: [req.user.id] } },
-    ];
+    // Rider sees orders assigned to them directly, OR where they are in the assignedDrivers list, OR if they already accepted it
+    orders = await Order.find({
+      $or: [
+        { driver: req.user.id },
+        { assignedDrivers: { $in: [req.user.id] } },
+      ],
+    }).populate("customer", "name email");
   } else {
-    filter.customer = req.user.id;
+    // User sees their own orders
+    orders = await Order.find({ customer: req.user.id });
   }
 
-  if (req.query.status) {
-    filter.status = req.query.status;
-  }
-
-  const [orders, total] = await Promise.all([
-    Order.find(filter)
-      .populate("customer", "name email")
-      .sort(sort)
-      .skip(skip)
-      .limit(limit),
-    Order.countDocuments(filter),
-  ]);
-
-  const pages = Math.ceil(total / limit) || 1;
-
-  res.status(200).json({
-    page,
-    pages,
-    total,
-    count: orders.length,
-    data: orders,
-  });
+  res.status(200).json(orders);
 });
 
 // @desc    Get order by ID
@@ -137,27 +94,12 @@ const getOrderById = asyncHandler(async (req, res) => {
   }
 
   // Check access rights
-  if (req.user.role === "Admin") {
-    res.status(200).json(order);
-    return;
-  }
-
-  if (req.user.role === "Rider") {
-    const isAssigned =
-      order.driver?.toString() === req.user.id ||
-      order.assignedDrivers.some((id) => id.toString() === req.user.id);
-
-    if (!isAssigned) {
-      res.status(403);
-      throw new Error("Not authorized");
-    }
-
-    res.status(200).json(order);
-    return;
-  }
-
-  if (order.customer._id.toString() !== req.user.id) {
-    res.status(403);
+  if (
+    req.user.role !== "Admin" &&
+    req.user.role !== "Rider" &&
+    order.customer._id.toString() !== req.user.id
+  ) {
+    res.status(401);
     throw new Error("Not authorized");
   }
 
@@ -185,13 +127,7 @@ const updateOrder = asyncHandler(async (req, res) => {
     throw new Error("Cannot update order after it has been accepted or picked up");
   }
 
-  const updates = {};
-  if (req.body.pickupLocation) updates.pickupLocation = req.body.pickupLocation;
-  if (req.body.dropoffLocation) updates.dropoffLocation = req.body.dropoffLocation;
-  if (req.body.pickupTime) updates.pickupTime = req.body.pickupTime;
-  if (req.body.items) updates.items = req.body.items;
-
-  const updatedOrder = await Order.findByIdAndUpdate(req.params.id, updates, {
+  const updatedOrder = await Order.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
   });
 
@@ -220,7 +156,6 @@ const cancelOrder = asyncHandler(async (req, res) => {
   }
 
   order.status = "Cancelled";
-  order.statusTimestamps.cancelledAt = new Date();
   await order.save();
 
   res.status(200).json(order);
@@ -250,7 +185,6 @@ const assignDriver = asyncHandler(async (req, res) => {
   order.assignedDrivers = [...new Set([...order.assignedDrivers, ...driverIds])];
   
   order.status = "Assigned";
-  order.statusTimestamps.assignedAt = new Date();
   await order.save();
 
   res.status(200).json(order);
@@ -282,7 +216,6 @@ const autoAssignDriver = asyncHandler(async (req, res) => {
   
   order.assignedDrivers.push(...newAssignments);
   order.status = "Assigned";
-  order.statusTimestamps.assignedAt = new Date();
   await order.save();
 
   res.status(200).json(order);
@@ -323,7 +256,6 @@ const acceptOrder = asyncHandler(async (req, res) => {
         status: "Accepted",
         driver: req.user.id,
         assignedDrivers: [], // or keep them for history, but usually we clear active pool
-        "statusTimestamps.acceptedAt": new Date(),
       },
     },
     { new: true }
@@ -370,7 +302,6 @@ const declineOrder = asyncHandler(async (req, res) => {
 
     if (order.assignedDrivers.length === 0) {
       order.status = "Pending";
-      order.statusTimestamps.assignedAt = null;
     }
 
     await order.save();
@@ -391,99 +322,23 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     throw new Error("Order not found");
   }
 
-  if (req.user.role === "Rider") {
-    if (!order.driver) {
-      res.status(403);
-      throw new Error("Not authorized");
-    }
-    if (order.driver.toString() !== req.user.id) {
-      res.status(403);
-      throw new Error("Not authorized");
-    }
+  if (req.user.role === "Rider" && order.driver.toString() !== req.user.id) {
+    res.status(401);
+    throw new Error("Not authorized");
   }
 
-  const allowedStatuses = [
-    "Pending",
-    "Assigned",
-    "Accepted",
-    "PickedUp",
-    "Delivered",
-    "Cancelled",
-  ];
-
-  if (!allowedStatuses.includes(status)) {
-    res.status(400);
-    throw new Error("Invalid status");
+  // Simple status transition check
+  if (status === "PickedUp" && order.status !== "Accepted") {
+      res.status(400);
+      throw new Error("Order must be accepted before pickup");
   }
-
-  const validTransitions = {
-    Pending: ["Assigned", "Cancelled"],
-    Assigned: ["Accepted", "Cancelled"],
-    Accepted: ["PickedUp", "Cancelled"],
-    PickedUp: ["Delivered"],
-    Delivered: [],
-    Cancelled: [],
-  };
-
-  const nextAllowed = validTransitions[order.status] || [];
-  if (!nextAllowed.includes(status)) {
-    res.status(400);
-    throw new Error(`Invalid status transition from ${order.status} to ${status}`);
-  }
-
-  if (status === "PickedUp") {
-    order.statusTimestamps.pickedUpAt = new Date();
-  }
-  if (status === "Delivered") {
-    order.statusTimestamps.deliveredAt = new Date();
-  }
-  if (status === "Cancelled") {
-    order.statusTimestamps.cancelledAt = new Date();
+  if (status === "Delivered" && order.status !== "PickedUp") {
+      res.status(400);
+      throw new Error("Order must be picked up before delivery");
   }
 
   order.status = status;
   await order.save();
-
-  if (status === "PickedUp") {
-    if (!order.driver) {
-      res.status(400);
-      throw new Error("Order has no assigned driver");
-    }
-    await Delivery.findOneAndUpdate(
-      { order: order._id },
-      {
-        order: order._id,
-        rider: order.driver,
-        status: "InProgress",
-      },
-      { upsert: true, new: true }
-    );
-  }
-
-  if (status === "Delivered") {
-    if (!order.driver) {
-      res.status(400);
-      throw new Error("Order has no assigned driver");
-    }
-    const earnings = Math.round(order.price * 0.7);
-    await Delivery.findOneAndUpdate(
-      { order: order._id },
-      {
-        order: order._id,
-        rider: order.driver,
-        status: "Completed",
-        confirmedAt: new Date(),
-        earnings,
-      },
-      { upsert: true, new: true }
-    );
-
-    if (order.driver) {
-      await User.findByIdAndUpdate(order.driver, {
-        $inc: { riderEarnings: earnings, riderCompletedDeliveries: 1 },
-      });
-    }
-  }
 
   res.status(200).json(order);
 });
@@ -496,7 +351,7 @@ const updateLocation = asyncHandler(async (req, res) => {
   const orderId = req.params.id;
 
   // Validate input
-  if (lat === undefined || lng === undefined) {
+  if (!lat || !lng) {
     res.status(400);
     throw new Error('Latitude and longitude are required');
   }

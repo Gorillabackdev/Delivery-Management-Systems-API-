@@ -32,27 +32,6 @@ const userSchema = new mongoose.Schema(
       enum: ROLES,
       default: "User",
     },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
-    deletedAt: {
-      type: Date,
-      default: null,
-    },
-    riderStatus: {
-      type: String,
-      enum: ["Online", "Offline"],
-      default: "Offline",
-    },
-    riderEarnings: {
-      type: Number,
-      default: 0,
-    },
-    riderCompletedDeliveries: {
-      type: Number,
-      default: 0,
-    },
   },
   { timestamps: true }
 );

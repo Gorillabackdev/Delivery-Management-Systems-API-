@@ -54,19 +54,6 @@ const orderSchema = new mongoose.Schema(
       ],
       default: "Pending",
     },
-    statusTimestamps: {
-      pendingAt: { type: Date, default: Date.now },
-      assignedAt: { type: Date, default: null },
-      acceptedAt: { type: Date, default: null },
-      pickedUpAt: { type: Date, default: null },
-      deliveredAt: { type: Date, default: null },
-      cancelledAt: { type: Date, default: null },
-    },
-    paymentStatus: {
-      type: String,
-      enum: ["Unpaid", "Paid", "Refunded"],
-      default: "Unpaid",
-    },
     items: [
       {
         name: String,
