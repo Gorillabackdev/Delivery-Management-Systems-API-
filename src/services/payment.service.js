@@ -1,6 +1,6 @@
 const Payment = require("../models/payment");
-const Order = require("../models/Order");
-const Delivery = require("../models/Delivery");
+const Order = require("../models/order.model");
+const Delivery = require("../models/delivery.model");
 
 /**
  * Create Payment
