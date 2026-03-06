@@ -15,9 +15,5 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-      - run: |
-          git rev-parse HEAD
-          echo "--- payment.service.js ---"
-          sed -n '1,60p' src/services/payment.service.js
       - run: npm ci
       - run: npm test
