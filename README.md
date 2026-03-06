@@ -1,4 +1,4 @@
-# Names of Collaborators
+# Names of Backend Devs and Collaborators
 1.**Name:Isaac Emmanuel**
 **Github** :github.com/Gorrillabackdev
 
