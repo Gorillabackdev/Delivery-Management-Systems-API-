@@ -1,39 +1,39 @@
 # Names of Collaborators
-1.**Name:**Isaac Emmanuel
-**Github:**github.com/Gorrillabackdev
+1.**Name:Isaac Emmanuel**
+**Github** :github.com/Gorrillabackdev
 
-2.**Name:**Oluwafemi Kareem
-**Github:**github.com/Zamar443
+2.**Name:Oluwafemi Kareem**
+**Github** :github.com/Zamar443
 
-3.**Name:**Ameh Timothy
-**Github:**github.com/Ametech
+3.**Name:Ameh Timothy**
+**Github:github.com/Ametech
 
-4.**Name:**Akintoye Peterpaul
-**Github:**github.com/AppeiYa
+4.**Name:Akintoye Peterpaul**
+**Github** :github.com/AppeiYa
 
-5.**Name:**IIiya Grace Rishama
-**Github:**github.com/Grace-iliya
+5.**Name:IIiya Grace Rishama**
+**Github** :github.com/Grace-iliya
 
-6.**Name:**Adebowale Daniel Olasupo
-**Github:**github.com/olabowale2cool
+6.**Name:debowale Daniel Olasupo**
+**Github:** :github.com/olabowale2cool
 
-7.**Name:**Uche chukwuebuka prince
-**Github:**github.com/thissprince
+7.**Name:Uche chukwuebuka prince**
+**Github** :github.com/thissprince
 
-8.**Name:**Mudasiru Abdulsalam Oluwatosin
-**Github:**github.com/tosvn
+8.**Name:Mudasiru Abdulsalam Oluwatosin**
+**Github** :github.com/tosvn
 
-9.**Name:**Sylvester-Ali Kizito
-**Github:**github.com/kizito-devbio
+9.**Name:Sylvester-Ali Kizito**
+**Github** :github.com/kizito-devbio
 
-10.**Name:**Princewill Ehirine
-**Github:**github.com/princelex4
+10.**Name:Princewill Ehirine**
+**Github** :github.com/princelex4
 
-11.**Name:**Nebechi Chika
-**Github:**github.com/chika-pixel632
+11.**Name:Nebechi Chika**
+**Github** :github.com/chika-pixel632
 
-12.**Name:**Toyeeb Kazeem
-**Github:**github.com/AnalytixTech
+12.**Name:Toyeeb Kazeem**
+**Github** :github.com/AnalytixTech
 
 # Delivery Management System API
 
