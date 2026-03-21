@@ -1,0 +1,396 @@
+    {
+    "info": {
+        "name": "Delivery Management API - Full Test Suite",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+        "name": "🔐 Authentication Setup",
+        "item": [
+            {
+            "name": "Register User",
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "exec": [
+                    "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                    "const json = pm.response.json();",
+                    "pm.test('Token received', () => pm.expect(json.token).to.be.a('string'));",
+                    "pm.collectionVariables.set('user_token', json.token);",
+                    "pm.collectionVariables.set('user_id', json.data.user.id);"
+                    ],
+                    "type": "text/javascript"
+                }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n    \"name\": \"Test User\",\n    \"email\": \"user@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"User\"\n}"
+                },
+                "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] }
+            }
+            },
+            {
+            "name": "Register Rider",
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "exec": [
+                    "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                    "const json = pm.response.json();",
+                    "pm.collectionVariables.set('rider_token', json.token);",
+                    "pm.collectionVariables.set('rider_id', json.data.user.id);"
+                    ],
+                    "type": "text/javascript"
+                }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n    \"name\": \"Test Rider\",\n    \"email\": \"rider@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"Rider\"\n}"
+                },
+                "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] }
+            }
+            },
+            {
+            "name": "Register Admin",
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "exec": [
+                    "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                    "const json = pm.response.json();",
+                    "pm.collectionVariables.set('admin_token', json.token);",
+                    "pm.collectionVariables.set('admin_id', json.data.user.id);"
+                    ],
+                    "type": "text/javascript"
+                }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n    \"name\": \"Test Admin\",\n    \"email\": \"admin@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"Admin\"\n}"
+                },
+                "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] }
+            }
+            }
+        ]
+        },
+        {
+        "name": "👤 User Management",
+        "item": [
+            {
+            "name": "Get Profile (User)",
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                    "pm.test('Returns user object', () => pm.expect(pm.response.json()).to.have.property('name'));"
+                    ],
+                    "type": "text/javascript"
+                }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+                "url": { "raw": "{{base_url}}/users/profile", "host": ["{{base_url}}"], "path": ["users", "profile"] }
+            }
+            },
+            {
+            "name": "Get All Users (Admin)",
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                    "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                    ],
+                    "type": "text/javascript"
+                }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/users", "host": ["{{base_url}}"], "path": ["users"] }
+            }
+            },
+            {
+            "name": "Update User (Self)",
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                    "pm.test('Name updated', () => pm.expect(pm.response.json().name).to.eql('Updated User'));"
+                    ],
+                    "type": "text/javascript"
+                }
+                }
+            ],
+            "request": {
+                "method": "PUT",
+                "header": [
+                { "key": "Authorization", "value": "Bearer {{user_token}}" },
+                { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n    \"name\": \"Updated User\"\n}"
+                },
+                "url": { "raw": "{{base_url}}/users/{{user_id}}", "host": ["{{base_url}}"], "path": ["users", "{{user_id}}"] }
+            }
+            }
+        ]
+        },
+        {
+        "name": "📦 Order Workflow",
+        "item": [
+            {
+            "name": "Create Order",
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "exec": [
+                    "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                    "const json = pm.response.json();",
+                    "pm.test('Order created', () => pm.expect(json).to.have.property('_id'));",
+                    "pm.collectionVariables.set('order_id', json._id);"
+                    ],
+                    "type": "text/javascript"
+                }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                { "key": "Authorization", "value": "Bearer {{user_token}}" },
+                { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n    \"pickupLocation\": {\n        \"address\": \"123 Main St\",\n        \"coordinates\": [-74.006, 40.7128]\n    },\n    \"dropoffLocation\": {\n        \"address\": \"456 Elm St\",\n        \"coordinates\": [-74.006, 40.7306]\n    },\n    \"pickupTime\": \"2025-03-20T14:00:00Z\",\n    \"items\": [\n        { \"name\": \"Pizza\", \"quantity\": 2 }\n    ]\n}"
+                },
+                "url": { "raw": "{{base_url}}/orders", "host": ["{{base_url}}"], "path": ["orders"] }
+            }
+            },
+            {
+            "name": "Get All Orders (User)",
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                    "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                    ],
+                    "type": "text/javascript"
+                }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+                "url": { "raw": "{{base_url}}/orders", "host": ["{{base_url}}"], "path": ["orders"] }
+            }
+            },
+            {
+            "name": "Get Order by ID",
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                    "pm.test('Order ID matches', () => pm.expect(pm.response.json()._id).to.eql(pm.collectionVariables.get('order_id')));"
+                    ],
+                    "type": "text/javascript"
+                }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+                "url": { "raw": "{{base_url}}/orders/{{order_id}}", "host": ["{{base_url}}"], "path": ["orders", "{{order_id}}"] }
+            }
+            },
+            {
+            "name": "Cancel Order",
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                    "pm.test('Status is Cancelled', () => pm.expect(pm.response.json().status).to.eql('Cancelled'));"
+                    ],
+                    "type": "text/javascript"
+                }
+                }
+            ],
+            "request": {
+                "method": "PUT",
+                "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+                "url": { "raw": "{{base_url}}/orders/{{order_id}}/cancel", "host": ["{{base_url}}"], "path": ["orders", "{{order_id}}", "cancel"] }
+            }
+            }
+        ]
+        },
+        {
+        "name": "🚚 Driver Assignment & Tracking",
+        "item": [
+            {
+            "name": "Assign Driver (Admin)",
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                    "pm.test('Status becomes Assigned', () => pm.expect(pm.response.json().status).to.eql('Assigned'));"
+                    ],
+                    "type": "text/javascript"
+                }
+                }
+            ],
+            "request": {
+                "method": "PUT",
+                "header": [
+                { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+                { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n    \"driverIds\": [\"{{rider_id}}\"]\n}"
+                },
+                "url": { "raw": "{{base_url}}/orders/{{order_id}}/assign", "host": ["{{base_url}}"], "path": ["orders", "{{order_id}}", "assign"] }
+            }
+            },
+            {
+            "name": "Accept Order (Rider)",
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                    "pm.test('Status becomes Accepted', () => pm.expect(pm.response.json().status).to.eql('Accepted'));"
+                    ],
+                    "type": "text/javascript"
+                }
+                }
+            ],
+            "request": {
+                "method": "PUT",
+                "header": [{ "key": "Authorization", "value": "Bearer {{rider_token}}" }],
+                "url": { "raw": "{{base_url}}/orders/{{order_id}}/accept", "host": ["{{base_url}}"], "path": ["orders", "{{order_id}}", "accept"] }
+            }
+            },
+            {
+            "name": "Update Location (Rider)",
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                    "pm.test('Location updated', () => pm.expect(pm.response.json().message).to.eql('Location updated successfully'));"
+                    ],
+                    "type": "text/javascript"
+                }
+                }
+            ],
+            "request": {
+                "method": "PUT",
+                "header": [
+                { "key": "Authorization", "value": "Bearer {{rider_token}}" },
+                { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n    \"lat\": 40.7128,\n    \"lng\": -74.0060\n}"
+                },
+                "url": { "raw": "{{base_url}}/orders/{{order_id}}/location", "host": ["{{base_url}}"], "path": ["orders", "{{order_id}}", "location"] }
+            }
+            },
+            {
+            "name": "Track Order (User)",
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                    "pm.test('Contains order and driverLocation', () => {",
+                    "  const json = pm.response.json();",
+                    "  pm.expect(json).to.have.property('order');",
+                    "  pm.expect(json).to.have.property('driverLocation');",
+                    "});"
+                    ],
+                    "type": "text/javascript"
+                }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+                "url": { "raw": "{{base_url}}/orders/{{order_id}}/track", "host": ["{{base_url}}"], "path": ["orders", "{{order_id}}", "track"] }
+            }
+            }
+        ]
+        },
+        {
+        "name": "🧹 Cleanup (Optional)",
+        "item": [
+            {
+            "name": "Delete User (Admin)",
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                    "pm.test('User removed', () => pm.expect(pm.response.json().message).to.eql('User removed'));"
+                    ],
+                    "type": "text/javascript"
+                }
+                }
+            ],
+            "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/users/{{user_id}}", "host": ["{{base_url}}"], "path": ["users", "{{user_id}}"] }
+            }
+            }
+        ]
+        }
+    ],
+    "variable": [
+        { "key": "base_url", "value": "http://localhost:5000/api" },
+        { "key": "user_token", "value": "" },
+        { "key": "rider_token", "value": "" },
+        { "key": "admin_token", "value": "" },
+        { "key": "user_id", "value": "" },
+        { "key": "rider_id", "value": "" },
+        { "key": "admin_id", "value": "" },
+        { "key": "order_id", "value": "" }
+    ]
+    }
